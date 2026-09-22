@@ -559,6 +559,7 @@ export interface Database {
           subject_id: string;
           academic_year_id: string;
           teacher_id: string | null;
+          term_id: string | null;
           type: "exam" | "quiz" | "homework" | "project";
           title: string;
           max_score: number;
@@ -575,6 +576,7 @@ export interface Database {
           subject_id: string;
           academic_year_id: string;
           teacher_id?: string | null;
+          term_id?: string | null;
           type?: string;
           title: string;
           max_score?: number;

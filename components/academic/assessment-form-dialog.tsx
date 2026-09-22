@@ -20,6 +20,13 @@ type Assessment = Database["public"]["Tables"]["assessments"]["Row"];
 type ClassRow = Database["public"]["Tables"]["classes"]["Row"];
 type Subject = Database["public"]["Tables"]["subjects"]["Row"];
 type AcademicYear = Database["public"]["Tables"]["academic_years"]["Row"];
+type Term = Database["public"]["Tables"]["terms"]["Row"];
+
+const TERM_TYPE_LABELS: Record<string, string> = {
+  semester: "Semestre",
+  trimester: "Trimestre",
+  custom: "Période",
+};
 
 const ASSESSMENT_TYPE_OPTIONS = [
   { value: "exam", label: "Examen" },
@@ -48,10 +55,12 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+  const [terms, setTerms] = useState<Term[]>([]);
 
   const [classId, setClassId] = useState("");
   const [subjectId, setSubjectId] = useState("");
   const [academicYearId, setAcademicYearId] = useState("");
+  const [termId, setTermId] = useState<string>("");
   const [type, setType] = useState("exam");
   const [title, setTitle] = useState("");
   const [maxScore, setMaxScore] = useState("20");
@@ -68,6 +77,19 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
         .then(({ data }) => setAcademicYears(data ?? []));
     }
   }, [open, profile?.institution_id]);
+
+  useEffect(() => {
+    if (!open || !academicYearId) {
+      if (open) setTerms([]);
+      return;
+    }
+    supabase
+      .from("terms")
+      .select("*")
+      .eq("academic_year_id", academicYearId)
+      .order("start_date", { ascending: true })
+      .then(({ data }) => setTerms(data ?? []));
+  }, [open, academicYearId]);
 
   useEffect(() => {
     if (!open || !classId) {
@@ -109,6 +131,7 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
       setClassId(assessment?.class_id ?? "");
       setSubjectId(assessment?.subject_id ?? "");
       setAcademicYearId(assessment?.academic_year_id ?? "");
+      setTermId(assessment?.term_id ?? "");
       setType(assessment?.type ?? "exam");
       setTitle(assessment?.title ?? "");
       setMaxScore(String(assessment?.max_score ?? "20"));
@@ -143,6 +166,7 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
         class_id: classId,
         subject_id: subjectId,
         academic_year_id: academicYearId,
+        term_id: termId || null,
         type,
         title: title.trim(),
         max_score: parseFloat(maxScore),
@@ -157,6 +181,7 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
           class_id: classId,
           subject_id: subjectId,
           academic_year_id: academicYearId,
+          term_id: termId || null,
           type, title: title.trim(),
           max_score: parseFloat(maxScore),
           coefficient: parseFloat(coefficient),
@@ -224,6 +249,22 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
               {errors.academicYearId && <p className="text-xs text-destructive">{errors.academicYearId}</p>}
             </div>
             <div className="space-y-2">
+              <Label htmlFor="as-term">Période</Label>
+              <Select value={termId} onValueChange={setTermId} disabled={loading || terms.length === 0}>
+                <SelectTrigger id="as-term"><SelectValue placeholder="Annuel" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Annuel (toutes périodes)</SelectItem>
+                  {terms.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name} ({TERM_TYPE_LABELS[t.term_type] ?? t.term_type})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="as-type">Type *</Label>
               <Select value={type} onValueChange={setType} disabled={loading}>
                 <SelectTrigger id="as-type"><SelectValue /></SelectTrigger>
@@ -232,6 +273,7 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2" />
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
