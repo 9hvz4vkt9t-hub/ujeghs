@@ -60,7 +60,7 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
   const [classId, setClassId] = useState("");
   const [subjectId, setSubjectId] = useState("");
   const [academicYearId, setAcademicYearId] = useState("");
-  const [termId, setTermId] = useState<string>("");
+  const [termId, setTermId] = useState<string>("__none__");
   const [type, setType] = useState("exam");
   const [title, setTitle] = useState("");
   const [maxScore, setMaxScore] = useState("20");
@@ -131,7 +131,7 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
       setClassId(assessment?.class_id ?? "");
       setSubjectId(assessment?.subject_id ?? "");
       setAcademicYearId(assessment?.academic_year_id ?? "");
-      setTermId(assessment?.term_id ?? "");
+      setTermId(assessment?.term_id ?? "__none__");
       setType(assessment?.type ?? "exam");
       setTitle(assessment?.title ?? "");
       setMaxScore(String(assessment?.max_score ?? "20"));
@@ -166,7 +166,7 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
         class_id: classId,
         subject_id: subjectId,
         academic_year_id: academicYearId,
-        term_id: termId || null,
+        term_id: termId !== "__none__" ? termId : null,
         type,
         title: title.trim(),
         max_score: parseFloat(maxScore),
@@ -181,7 +181,7 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
           class_id: classId,
           subject_id: subjectId,
           academic_year_id: academicYearId,
-          term_id: termId || null,
+          term_id: termId !== "__none__" ? termId : null,
           type, title: title.trim(),
           max_score: parseFloat(maxScore),
           coefficient: parseFloat(coefficient),
@@ -253,7 +253,7 @@ export function AssessmentFormDialog({ open, onOpenChange, assessment, onSaved }
               <Select value={termId} onValueChange={setTermId} disabled={loading || terms.length === 0}>
                 <SelectTrigger id="as-term"><SelectValue placeholder="Annuel" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Annuel (toutes périodes)</SelectItem>
+                  <SelectItem value="__none__">Annuel (toutes périodes)</SelectItem>
                   {terms.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.name} ({TERM_TYPE_LABELS[t.term_type] ?? t.term_type})
